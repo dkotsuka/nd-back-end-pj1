@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import psycopg2
 
 DBNAME = "news"
@@ -59,8 +61,8 @@ def print_when_had_more_errors():
     results = c.fetchall()
     for res in results:
         print(
-            "* " + res[0].strftime("%B %d, %Y") + " - "
-            + str(round(res[1], 2)) + "% errors"
+            "* " + res[0].strftime("%B %d, %Y") + " - " +
+            str(round(res[1], 2)) + "% errors"
         )
     db.close()
 
