@@ -3,24 +3,16 @@ import psycopg2
 DBNAME = "news"
 
 
-def create_view_log_status_ok():
-    db = psycopg2.connect(dbname=DBNAME)
-    c = db.cursor()
-    c.execute("create or replace view status_ok as \
-        select overlay(path placing '' from 1 for 9) as slug, \
-        count(*) as num \
-        from log \
-        where status like '%200%' \
-        group by path order by num desc")
-    db.commit()
-    db.close()
-
-
 def print_top_three_ever():
     db = psycopg2.connect(dbname=DBNAME)
     c = db.cursor()
     c.execute("select title, num \
-        from articles join status_ok \
+        from articles join (create or replace view status_ok as \
+        select overlay(path placing '' from 1 for 9) as slug, \
+        count(*) as num \
+        from log \
+        where status like '%200%' \
+        group by path order by num desc) as status_ok \
         on articles.slug = status_ok.slug \
         limit 3")
     results = c.fetchall()
@@ -35,7 +27,12 @@ def print_top_authors_ever():
     c.execute("select name, views \
         from authors join \
         (select author as id, sum(num::int) as views \
-        from articles join status_ok \
+        from articles join (create or replace view status_ok as \
+        select overlay(path placing '' from 1 for 9) as slug, \
+        count(*) as num \
+        from log \
+        where status like '%200%' \
+        group by path order by num desc) as status_ok \
         on articles.slug = status_ok.slug \
         group by author \
         order by views desc) as view_counter\
@@ -67,8 +64,6 @@ def print_when_had_more_errors():
         )
     db.close()
 
-
-create_view_log_status_ok()
 
 print('\n1. What are the three most popular articles of all time?')
 print_top_three_ever()
